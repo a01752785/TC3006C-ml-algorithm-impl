@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from math import sqrt
+import pandas as pd
 import random
 
 
@@ -11,6 +12,12 @@ class NDimensionalPoint:
 
     def __str__(self) -> str:
         return str(self.dimensions_)
+
+    def to_list(self) -> list[float]:
+        result = []
+        for dimension in self.dimensions_:
+            result.append(dimension)
+        return result
 
     def num_dimensions(self) -> int:
         return len(self.dimensions_)
@@ -24,6 +31,20 @@ class NDimensionalPoint:
             cur_sum += (self.dimension_value(i) -
                         other_point.dimension_value(i)) ** 2
         return sqrt(cur_sum)
+
+
+class PandasDataFrameAdapter:
+    def __init__(self, df: pd.DataFrame) -> None:
+        self.column_names_: list[str] = []
+        self.points_: list[NDimensionalPoint] = []
+        for column in df.columns:
+            self.column_names_.append(column)
+
+        for row in range(len(df)):
+            self.points_.append(NDimensionalPoint(df.loc[row]))
+
+    def points(self) -> list[NDimensionalPoint]:
+        return self.points_
 
 
 class Cluster:
@@ -70,30 +91,46 @@ class Cluster:
     def clear_points(self) -> None:
         self.points_.clear()
 
+    def sse(self) -> float:
+        cur_sse: float = 0
+        for point in self.points_:
+            cur_sse += self.center_.distance(point) ** 2
+        return cur_sse
+
 
 class KMeans:
     def __init__(self, data: Sequence[NDimensionalPoint], k: int) -> None:
         self.data_: Sequence[NDimensionalPoint] = data
         self.clusters_: Sequence[Cluster] = []
+        self.cluster_num_for_point_: list[int] = [0] * len(data)
         # Init clusters
         for _ in range(k):
             self.clusters_.append(Cluster([], random.choice(self.data_)))
 
     def train(self, epochs: int) -> None:
+        self.sse_: list[float] = []
         for _ in range(epochs):
             self.assign_points_to_clusters()
             self.recompute_means()
+            self.recompute_sse()
 
     def assign_points_to_clusters(self) -> None:
         for i in range(len(self.clusters_)):
             self.clusters_[i].clear_points()
-        for point in self.data_:
+        for point_id, point in enumerate(self.data_):
             min_distance = self.clusters_[0].center().distance(point)
-            min_distance_id = 0
+            min_distance_cluster_id = 0
             for i in range(len(self.clusters_)):
                 if (self.clusters_[i].center().distance(point) < min_distance):
-                    min_distance_id = i
-            self.clusters_[min_distance_id].add_point(point)
+                    min_distance_cluster_id = i
+            self.clusters_[min_distance_cluster_id].add_point(point)
+            self.cluster_num_for_point_[point_id] = min_distance_cluster_id
+
+    def recompute_sse(self) -> None:
+        sse: float = 0.0
+        for cluster in self.clusters_:
+            sse += cluster.sse()
+        self.sse_.append(sse)
 
     def recompute_means(self) -> None:
         for i in range(len(self.clusters_)):
@@ -101,6 +138,12 @@ class KMeans:
 
     def clusters(self) -> Sequence[Cluster]:
         return self.clusters_
+
+    def list_of_cluster_nums(self) -> Sequence[int]:
+        return self.cluster_num_for_point_
+
+    def sse_epoch_list(self) -> list[float]:
+        return self.sse_
 
 
 def main() -> None:
