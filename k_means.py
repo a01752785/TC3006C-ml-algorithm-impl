@@ -42,7 +42,7 @@ class PandasDataFrameAdapter:
             self.column_names_.append(column)
 
         for row in range(len(df)):
-            self.points_.append(NDimensionalPoint(df.loc[row].to_list()))
+            self.points_.append(NDimensionalPoint(df.iloc[row].to_list()))
 
     def points(self) -> list[NDimensionalPoint]:
         return self.points_
