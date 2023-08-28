@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # Data visualization
     iris_combined: pd.DataFrame = pd.concat([iris, iris_2])
-    iris_combined["cluster"] = iris["cluster"].astype("category")
+    iris_combined["cluster"] = iris_combined["cluster"].astype("category")
     sns.relplot(x="petal_length", y="petal_width",
                 hue="cluster", data=iris_combined, col="source")
     plt.show()
