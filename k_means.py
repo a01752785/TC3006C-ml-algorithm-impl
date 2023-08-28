@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from math import sqrt
+from typing import Optional
 import pandas as pd
 import random
 
@@ -41,7 +42,7 @@ class PandasDataFrameAdapter:
             self.column_names_.append(column)
 
         for row in range(len(df)):
-            self.points_.append(NDimensionalPoint(df.loc[row]))
+            self.points_.append(NDimensionalPoint(df.loc[row].to_list()))
 
     def points(self) -> list[NDimensionalPoint]:
         return self.points_
@@ -99,13 +100,19 @@ class Cluster:
 
 
 class KMeans:
-    def __init__(self, data: Sequence[NDimensionalPoint], k: int) -> None:
+    def __init__(self, data: Sequence[NDimensionalPoint], k: int,
+                 init_centers: Optional[list[NDimensionalPoint]]
+                 = None) -> None:
         self.data_: Sequence[NDimensionalPoint] = data
         self.clusters_: Sequence[Cluster] = []
         self.cluster_num_for_point_: list[int] = [0] * len(data)
         # Init clusters
-        for _ in range(k):
-            self.clusters_.append(Cluster([], random.choice(self.data_)))
+        if (isinstance(init_centers, list)):
+            for center in init_centers:
+                self.clusters_.append(Cluster([], center))
+        else:
+            for _ in range(k):
+                self.clusters_.append(Cluster([], random.choice(self.data_)))
 
     def train(self, epochs: int) -> None:
         self.sse_: list[float] = []
@@ -139,7 +146,7 @@ class KMeans:
     def clusters(self) -> Sequence[Cluster]:
         return self.clusters_
 
-    def list_of_cluster_nums(self) -> Sequence[int]:
+    def list_of_cluster_nums(self) -> list[int]:
         return self.cluster_num_for_point_
 
     def sse_epoch_list(self) -> list[float]:
