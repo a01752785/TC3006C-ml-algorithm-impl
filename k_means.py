@@ -8,6 +8,10 @@ import random
 
 
 class NDimensionalPoint:
+    """
+    Class to represent a point in a N-dimensional plane.
+    """
+
     def __init__(self, data: Sequence[float]) -> None:
         self.dimensions_: Sequence[float] = data
 
@@ -27,6 +31,9 @@ class NDimensionalPoint:
         return self.dimensions_[dimension_id]
 
     def distance(self, other_point: NDimensionalPoint) -> float:
+        """
+        Computes the euclidean distance to a given point.
+        """
         cur_sum: float = 0
         for i in range(self.num_dimensions()):
             cur_sum += (self.dimension_value(i) -
@@ -35,6 +42,11 @@ class NDimensionalPoint:
 
 
 class PandasDataFrameAdapter:
+    """
+    Class to convert a Pandas DataFrame into the data format
+    that the K Means class uses.
+    """
+
     def __init__(self, df: pd.DataFrame) -> None:
         self.column_names_: list[str] = []
         self.points_: list[NDimensionalPoint] = []
@@ -52,6 +64,10 @@ class PandasDataFrameAdapter:
 
 
 class Cluster:
+    """
+    Class to represent a cluster.
+    """
+
     def __init__(self, points: list[NDimensionalPoint],
                  center: NDimensionalPoint) -> None:
         self.points_: list[NDimensionalPoint] = points
@@ -68,6 +84,11 @@ class Cluster:
         )
 
     def recompute_center(self) -> None:
+        """
+        Recomputes the center for each dimension as the mean
+        value for that dimension.
+        """
+
         # Not possible to recompute a center of a 0-point cluster
         if len(self.points_) == 0:
             return None
@@ -96,6 +117,11 @@ class Cluster:
         self.points_.clear()
 
     def sse(self) -> float:
+        """
+        Returns the sum of squared errors for the cluster.
+        This is the sum of the squared distance from the
+        center to all the member points.
+        """
         cur_sse: float = 0
         for point in self.points_:
             cur_sse += self.center_.distance(point) ** 2
@@ -103,6 +129,10 @@ class Cluster:
 
 
 class KMeans:
+    """
+    Class that implements the K Means algorithm.
+    """
+
     def __init__(self, data: Sequence[NDimensionalPoint], k: int,
                  init_centers: Optional[list[NDimensionalPoint]]
                  = None) -> None:
@@ -118,6 +148,9 @@ class KMeans:
                 self.clusters_.append(Cluster([], random.choice(self.data_)))
 
     def train(self, epochs: int) -> None:
+        """
+        Performs the K Means algorithm.
+        """
         self.sse_: list[float] = []
         for _ in range(epochs):
             self.assign_points_to_clusters()
@@ -125,6 +158,9 @@ class KMeans:
             self.recompute_sse()
 
     def assign_points_to_clusters(self) -> None:
+        """
+        Visits each point and adds it to the closest cluster.
+        """
         for i in range(len(self.clusters_)):
             self.clusters_[i].clear_points()
         for point_id, point in enumerate(self.data_):
@@ -156,6 +192,9 @@ class KMeans:
         return self.sse_
 
     def predict(self, point: NDimensionalPoint):
+        """
+        Returns the id of the closest cluster to the given point.
+        """
         min_id: int = -1
         min_dist: float = 1e9
         for i in range(len(self.clusters_)):
