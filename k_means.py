@@ -47,6 +47,9 @@ class PandasDataFrameAdapter:
     def points(self) -> list[NDimensionalPoint]:
         return self.points_
 
+    def point_by_index(self, index) -> NDimensionalPoint:
+        return self.points_[index]
+
 
 class Cluster:
     def __init__(self, points: list[NDimensionalPoint],
@@ -151,6 +154,15 @@ class KMeans:
 
     def sse_epoch_list(self) -> list[float]:
         return self.sse_
+
+    def predict(self, point: NDimensionalPoint):
+        min_id: int = -1
+        min_dist: float = 1e9
+        for i in range(len(self.clusters_)):
+            if (self.clusters_[i].center().distance(point) < min_dist):
+                min_dist = self.clusters_[i].center().distance(point)
+                min_id = i
+        return min_id
 
 
 def main() -> None:
