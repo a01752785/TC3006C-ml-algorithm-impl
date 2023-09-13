@@ -8,7 +8,6 @@ from sklearn.preprocessing import StandardScaler
 from k_means import Cluster, KMeans, PandasDataFrameAdapter
 
 if __name__ == "__main__":
-    random.seed(42)
     california: pd.DataFrame = pd.read_csv("california_housing.csv")
 
     # Cluster using longitude, latitude and housing_median_age

@@ -8,7 +8,6 @@ from sklearn.model_selection import train_test_split
 from k_means import KMeans, PandasDataFrameAdapter
 
 if __name__ == "__main__":
-    random.seed(50)
 
     iris_ori: pd.DataFrame = pd.read_csv("iris.data", header=None)
     col_names = [
