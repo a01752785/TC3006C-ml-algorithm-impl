@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import random
 from sklearn import cluster
 from sklearn.model_selection import train_test_split
 
@@ -9,6 +8,7 @@ from k_means import KMeans, PandasDataFrameAdapter
 
 if __name__ == "__main__":
 
+    # Read the dataset
     iris_ori: pd.DataFrame = pd.read_csv("iris.data", header=None)
     col_names = [
         "sepal_length", "sepal_width", "petal_length", "petal_width", "class"
@@ -21,6 +21,8 @@ if __name__ == "__main__":
         col for col in iris_ori.columns if col not in columns_to_keep
     ]
     features = iris_ori.drop(columns=columns_to_drop)
+
+    # Divide the data in training and test
     x_train, x_test, y_train, y_test = train_test_split(features,
                                                         iris_ori["class"],
                                                         test_size=0.2,
@@ -39,8 +41,6 @@ if __name__ == "__main__":
     k_means.train(epochs=10)
     iris_2["cluster"] = k_means.list_of_cluster_nums()
     iris_2["source"] = "own impl"
-
-    # Validation
 
     # Map cluster name to cluster id
     # The id with the most frequency is selected
@@ -66,26 +66,34 @@ if __name__ == "__main__":
         class_by_cluster_id[max_id] = key
     print(cluster_id_by_class)
 
-    test_adapter = PandasDataFrameAdapter(features)
-    assigned_correctly = 0
-    for index in x_test.index.values:
-        pred_cluster_id = k_means.predict(test_adapter.point_by_index(index))
-        actual_cluster_id = cluster_id_by_class[iris_ori.iloc[index]["class"]]
-        print(index)
-        print(f"Prediction: {class_by_cluster_id[pred_cluster_id]}")
-        print(f"Actual: {class_by_cluster_id[actual_cluster_id]}")
-        if (pred_cluster_id == actual_cluster_id):
-            assigned_correctly += 1
-    print(f"Correct prediction ratio: {assigned_correctly / len(x_test)}")
-
-    # Data visualization
-    iris_combined: pd.DataFrame = pd.concat([iris, iris_2])
-    iris_combined["cluster"] = iris_combined["cluster"].astype("category")
+    # Scikitlearn implementation
     sns.relplot(x="petal_length", y="petal_width",
-                hue="cluster", data=iris_combined, col="source")
+                hue="cluster", data=iris, col="source")
     plt.show()
-    plt.plot(k_means.sse_epoch_list())
-    plt.title("Error over time. Source: Own impl")
-    plt.xlabel("Epochs")
-    plt.ylabel("Sum of squared error")
-    plt.show()
+
+    # Train the model multiple times for algorithm testing
+    for i in range(5):
+        k_means = KMeans(data=adapter.points(), k=3)
+        k_means.train(epochs=10)
+        iris_2["cluster"] = k_means.list_of_cluster_nums()
+        iris_2["source"] = "own impl"
+        sns.relplot(x="petal_length", y="petal_width",
+                    hue="cluster", data=iris_2)
+        plt.title(f"Own implementation, execution {i}")
+        plt.show()
+        # Plot sum of square errors
+        plt.plot(k_means.sse_epoch_list())
+        plt.title("Error over time. Source: Own impl")
+        plt.xlabel("Epochs")
+        plt.ylabel("Sum of squared error")
+        plt.show()
+
+        print(f"*** Model number {i} ***")
+        test_adapter = PandasDataFrameAdapter(features)
+        assigned_correctly = 0
+        for index in x_test.index.values:
+            pred_cluster_id = k_means.predict(test_adapter.point_by_index(index))
+            actual_cluster_id = cluster_id_by_class[iris_ori.iloc[index]["class"]]
+            if (pred_cluster_id == actual_cluster_id):
+                assigned_correctly += 1
+        print(f"Correct prediction ratio with validation set: {assigned_correctly / len(x_test)}")
